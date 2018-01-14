@@ -14,11 +14,12 @@ My environment is a Dell Windows 10 laptop that has the Arduino IDE installed. I
 USB A to B cable that came with my Arduino experiment kit. In my case I can use the Serial Monitor with the
 test application.
 
-The DHT11 humidity and temperature sensor uses a very simple variation of
-the [1 Wire communication protocol](https://en.wikipedia.org/wiki/1-Wire). The protocol for the DHT11 sensor
-uses the width of digital pulses, how long a pin is held LOW with the normal state being HIGH, to send bits as electrical
-pulses through a connecting wire. The data the sensor provides is a set of two byte values for the humidity and
-another two byte values for the temperature in Celsius. The first of the two byte values is the most significant
+The DHT11 humidity and temperature sensor uses the pulse width of electrical signals to communicate bits
+something like the vastly more complex [1 Wire communication protocol](https://en.wikipedia.org/wiki/1-Wire).
+The protocol for the DHT11 sensor uses the width of digital pulses, how long a pin is held LOW with
+the normal state being HIGH, to send bits as electrical pulses through a connecting wire. The data
+the sensor provides is a set of two byte values for the humidity and another two byte values for
+the temperature in Celsius. The first of the two byte values is the most significant
 part of the value, the value to the left of the decimal point. The second of the two byte values is the least
 significant part of the value, the value to the right of the decimal point.
 
