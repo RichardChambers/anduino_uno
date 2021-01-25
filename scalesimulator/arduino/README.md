@@ -18,6 +18,9 @@ use of a membrane keypad to be used to modify the weight reported, the units of 
 membrane keypad allows for the data and status to be modified while the simulator is in use and the serial communications is being used by the
 point of sale application and unavailable to any other application. Plus it was kind of a cool thing to add.
 
+See [Connecting a 4 X 4 Membrane Keypad to an Arduino](https://www.instructables.com/Connecting-a-4-x-4-Membrane-Keypad-to-an-Arduino/) for instructions
+about connecting a membrane keypad to an Arduino.
+
 This sketch and the test application have been tested using the Elegoo UNO R3 Project Complete Starter Kit with Arduino Uno. The membrane keypad
 I used for my testing was the one from that kit which contained the digits 0 through 9 as well as the letters A through D along with the star
 and the pound sign.
