@@ -1,0 +1,7 @@
+﻿  SerialConsole.cpp
+c:\users\rchamber\documents\arduino\anduino_uno\scalesimulator\testapp\serialconsole.cpp(408): warning C4302: 'type cast': truncation from 'HANDLE' to 'SHORT'
+c:\users\rchamber\documents\arduino\anduino_uno\scalesimulator\testapp\serialconsole.cpp(446): warning C4302: 'type cast': truncation from 'HANDLE' to 'SHORT'
+c:\users\rchamber\documents\arduino\anduino_uno\scalesimulator\testapp\serialconsole.cpp(680): warning C4267: '=': conversion from 'size_t' to 'USHORT', possible loss of data
+c:\users\rchamber\documents\arduino\anduino_uno\scalesimulator\testapp\serialconsole.cpp(687): warning C4267: '=': conversion from 'size_t' to 'USHORT', possible loss of data
+c:\users\rchamber\documents\arduino\anduino_uno\scalesimulator\testapp\serialconsole.cpp(694): warning C4267: '=': conversion from 'size_t' to 'USHORT', possible loss of data
+  SerialConsole.vcxproj -> C:\Users\rchamber\Documents\Arduino\anduino_uno\scalesimulator\testapp\x64\Debug\SerialConsole.exe

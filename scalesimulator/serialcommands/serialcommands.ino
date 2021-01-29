@@ -86,8 +86,9 @@ String inBuffer;
 int   lb1 = 0, lb2 = 26;    // most significant and least signicant parts of weight.
 unsigned char s1 = 0x30, s2 = 0x30;   // status byte 1 and status byte 2
 
-enum  ScaleUnits {English, Metric};
+enum  ScaleUnits {English = 0, Metric = 1};
 ScaleUnits   iUnits = English;
+char *pUnits[] = {"LB", "KG" };
 
 // A membrane matrix keypad can be attached to the Arduino to allow a simple
 // user interface for changing the simulated amount of weight and the units of
@@ -117,6 +118,22 @@ Keypad customKeypad = Keypad( makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS
 short lbNdx = 0;    // index for keypad data entry into lb1 and lb2 to change weight
 short stNdx = 0;    // set status indicator, 0 no set, 1 set byte 1, 2 set byte 2
 
+enum Protocol_set {Protocol_SCP_01 = 0, Protocol_SCP_02 = 1};
+
+Protocol_set cProtocol = Protocol_SCP_01;
+
+struct {
+  short  sMsbLen;
+  short  sMsbMod;
+  short  sLsbLen;
+  short  sLsbMod;
+  char  *fmt_weight;
+  char  *fmt_status;
+} Protocol_fmt [] = {
+  {4, 10000, 2, 100, "\n%4.4d.%2.2d%s\r\n%c%c\r\x03", "\n%c%c\r\x03"},   // SCP-01 response message for weight and status
+  {2, 100, 3, 1000, "\n%2.2d.%3.3d%s\r\nS%c%c\r\x03", "\nS%c%c\r\x03"}  // SCP-02 response message for weight and status
+};
+
 void handleKeyPad ()
 {
   char customKey = customKeypad.getKey();
@@ -140,8 +157,21 @@ void handleKeyPad ()
     case 'B':       // set the status byte 2 value (0 - 3)
         stNdx = 2;
         break;
+    case 'C':       // change the serial protocol SCP-01, SCP-02, etc.
+        stNdx = 100;
+        break;
     case '0':
+        if (stNdx == 100) {
+          cProtocol = Protocol_SCP_01;
+          stNdx = 0;
+          break;
+        }
     case '1':
+        if (stNdx == 100) {
+          cProtocol = Protocol_SCP_02;
+          stNdx = 0;
+          break;
+        }
     case '2':
     case '3':
         if (stNdx == 1) {
@@ -165,14 +195,16 @@ void handleKeyPad ()
     case '9':
         if (stNdx) {
           // if status byte change was requested then just ignore this
+          // and ensure no other digits entered will affect current weight setting.
           stNdx = 0;
+          lbNdx = 100;
           break;
         }
 
-        if (lbNdx < 4) {
+        if (lbNdx < Protocol_fmt[cProtocol].sMsbLen) {
           lb1 *= 10;
           lb1 += customKey - '0';
-        } else if (lbNdx < 6) {
+        } else if (lbNdx < Protocol_fmt[cProtocol].sMsbLen + Protocol_fmt[cProtocol].sLsbLen) {
           lb2 *= 10;
           lb2 += customKey - '0';
         }
@@ -188,18 +220,15 @@ void handle_command(String &inCommand) {
     switch (inCommand[0]) {
       case 'W':    // weight command
       case 'w':
-        {
-          if (iUnits == English)
-            sprintf (cBuff, "\n%4.4d.%2.2dLB\r\n%c%c\r\x03", lb1, lb2, s1, s2);
-          else
-           sprintf (cBuff, "\n%4.4d.%2.2dKG\r\n%c%c\r\x03", lb1, lb2, s1, s2);
-        }
+        sprintf (cBuff, Protocol_fmt[cProtocol].fmt_weight,
+            (lb1 % Protocol_fmt[cProtocol].sMsbMod), (lb2 % Protocol_fmt[cProtocol].sLsbMod),
+            pUnits[iUnits], s1, s2);
         break;
       case 'S':    // status command
       case 's':
       case 'Z':    // zero scale command (zeros scale but response is same as status command)
       case 'z':
-        sprintf (cBuff, "\n%c%c\r\x03", s1, s2);
+        sprintf (cBuff, Protocol_fmt[cProtocol].fmt_status, s1, s2);
         break;
       default:     // unrecognized command
         sprintf (cBuff, "\n?\r\x03");

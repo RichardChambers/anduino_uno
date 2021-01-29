@@ -487,23 +487,32 @@ struct ScaleStatus {
 
 ScaleStatus parseResponseStatus(char* pBuff)
 {
+	// two forms of the status byte sequence in a response.
+	//  - SCP-01  ->  <LF>hh...<CR><ETX>
+	//  - SCP-02  ->  <LF>Shh...<CR><ETX>
+
     ScaleStatus st = { 0 };
     int   iNdex = 2;
 
-    st.s1 = pBuff[0];
-    st.s2 = pBuff[1];
+	if (pBuff[0] == 'S') {
+		// SCP-02 protocol detected. skip the S character to get to status bytes.
+		pBuff++;
+	}
+
+	st.s1 = pBuff[0];
+	st.s2 = pBuff[1];
     if (st.s2 & 0x40) {
         // byte follows bit is turned on so lets get the next byte.
         st.s3 = pBuff[2];
-        iNdex++;
-    }
+		iNdex++;
+	}
 
     // check that first two bytes of status have the always on bit set.
     if ((pBuff[0] & 0x30) != 0x30)
         st.iError = 1;
     if ((pBuff[1] & 0x30) != 0x30)
         st.iError = 2;
-    if ((st.s2 & 0x40) && (pBuff[3] & 0x30) != 0x30)
+    if ((st.s2 & 0x40) && (pBuff[2] & 0x30) != 0x30)
         st.iError = 3;
 
     // check that message is terminated by a carriage return and an ETX character.
@@ -539,6 +548,7 @@ void parseResponseWeight(char *pBuff)
                     ndxBuff++;
                 }
                 else if (pBuff[ndxBuff] == '?') {
+					// unrecognized command response is "\n?\r\x03"
                     iState = 200;
                 }
                 else {
@@ -642,7 +652,7 @@ int main()
 {
     printHelp();
 
-    USHORT    usPortId = 3;
+    USHORT    usPortId = 6;
     PROTOCOL  Protocol = { 0 };
 
     Protocol.usComBaud = 9600;
@@ -695,7 +705,7 @@ int main()
         if (iRead) {
             char bufin[128] = { 0 };
 
-            PifReadCom(hPort, &bufin, sizeof(bufin));
+            short sRet = PifReadCom(hPort, &bufin, sizeof(bufin));
             if (bufin[0] != '\n') {
                 printf("  Response has incorrect format.\n");
             } else if (bufin[1] == '?') {
