@@ -83,13 +83,89 @@ String inBuffer;
 
 // scale measurement data. this determines values returned in a weight response.
 
-int   lb1 = 0, lb2 = 26;    // most significant and least signicant parts of weight.
+int   lb1 = 0, lb2 = 250;    // most significant and least signicant parts of weight.
 unsigned char s1 = 0x30, s2 = 0x30;   // status byte 1 and status byte 2
 
-enum  ScaleUnits {English = 0, Metric = 1};
+enum  ScaleUnits {English, Metric};
 ScaleUnits   iUnits = English;
-char *pUnits[] = {"LB", "KG" };
 
+struct {
+  char *specWeight;
+  char *specStatus;
+  short maxMsp;
+  short maxLsp;
+} specInUseFmt [] = {
+      //weight then units then status
+      { "\n%4.4d.%2.2d%s\r\n%c%c\r\x03", "\n%c%c\r\x03", 4, 2},    // SCP-01 specification for response
+      { "\n%2.2d.%3.3d%s\r\nS%c%c\r\x03", "\nS%c%c\r\x03", 2, 3 }  // SCP-02 specification for response
+};
+
+char *lcdInfoFmt[] = {
+      // max of 16 characters for 16x2 LCD module
+      "%4.4d.%2.2d%-2.2s %2.2x %2.2x",    // SCP-01 specification for response
+      "%2.2d.%3.3d%-2.2s %2.2x %2.2x "    // SCP-02 specification for response
+};
+
+enum SpecInUse { Scp_01 = 0, Scp_02 = 1};
+SpecInUse  specInUse = Scp_02;
+
+int mypow (int baseVal, int expVal)
+{
+  int iVal = 1;
+
+  if (expVal == 0) {
+    iVal = 0;
+  } else if (expVal > 0) {
+    for ( ; expVal > 0; expVal--) {
+      iVal *= baseVal;
+    }
+  }
+
+  return iVal;
+}
+void modWeightValues()
+{
+    int iModVal = 1;
+
+    iModVal = mypow(10, specInUseFmt[specInUse].maxMsp);
+    lb1 %= iModVal;
+    iModVal = mypow(10, specInUseFmt[specInUse].maxLsp);
+    lb2 %= iModVal;
+}
+
+#define USE_LCD
+#define USE_KEYPAD
+//#define USE_SERIAL
+
+
+#if defined(USE_LCD)
+// A 16x2 LCD can be attached to the Arduino to show
+// status information. See format specifier lcdInfoFmt[] above.
+//  - d  -> a digit or a decimal point for the current weight setting
+//  - u  -> a letter of current weight units:  lb, kg
+//  - s  -> a letter of current scale specification
+//  - i  -> a symbol representing current input status from keypad see handleKeyPad()
+//          R ready for weight request
+//          * clear key to restart the data entry sequence
+//          # change the units of measurement
+//          A set the status byte 1 value (0 - 3)
+//          B set the status byte 2 value (0 - 3)
+//          C set the specification to be used for response messages
+//  - m  -> a letter of a free form message
+//
+//      00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+//  0    d  d  d  d  d  d  d  u  u     a  a  b  b  
+//  1    i  m  m  m  m  m  m  m  m  m  m  m  m  m  m  m
+
+#include <LiquidCrystal.h>
+
+// In order to use both the LCD and the keypad we will
+// use the six analog pins as digital pins.
+// Analog pin 0 is digital pin 14, Analog pin 1 is digital pin 15, etc.
+LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
+#endif
+
+#if defined(USE_KEYPAD)
 // A membrane matrix keypad can be attached to the Arduino to allow a simple
 // user interface for changing the simulated amount of weight and the units of
 // measurement.
@@ -116,23 +192,42 @@ byte colPins[COLS] = {5, 4, 3, 2}; //connect to the column pinouts of the keypad
 Keypad customKeypad = Keypad( makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 
 short lbNdx = 0;    // index for keypad data entry into lb1 and lb2 to change weight
-short stNdx = 0;    // set status indicator, 0 no set, 1 set byte 1, 2 set byte 2
+short stNdx = 0;    // set status indicator, 0 no set, 1 set byte 1, 2 set byte 2, 100 set Spec in use
 
-enum Protocol_set {Protocol_SCP_01 = 0, Protocol_SCP_02 = 1};
+int setLcdIndicator (int c)
+{
+  char cBuff[4]= {0, 0};
+  cBuff[0] = c;
+  
+#if defined(USE_LCD)
+  lcd.setCursor(0,1);    // beginning at column 0, line 1 (begining of first column on second line)
+  lcd.print(cBuff);
+#endif
+#if defined(USE_SERIAL)
+  Serial.print("setLcdIndicator: "); 
+  Serial.println(cBuff);
+#endif
+  return 0;
+}
 
-Protocol_set cProtocol = Protocol_SCP_01;
+int updateLCDInfo (void)
+{
+    char cBuff[32] = {0};
 
-struct {
-  short  sMsbLen;
-  short  sMsbMod;
-  short  sLsbLen;
-  short  sLsbMod;
-  char  *fmt_weight;
-  char  *fmt_status;
-} Protocol_fmt [] = {
-  {4, 10000, 2, 100, "\n%4.4d.%2.2d%s\r\n%c%c\r\x03", "\n%c%c\r\x03"},   // SCP-01 response message for weight and status
-  {2, 100, 3, 1000, "\n%2.2d.%3.3d%s\r\nS%c%c\r\x03", "\nS%c%c\r\x03"}  // SCP-02 response message for weight and status
-};
+     if (iUnits == English)
+      sprintf (cBuff, lcdInfoFmt[specInUse], lb1, lb2, "LB", s1, s2);
+    else
+      sprintf (cBuff, lcdInfoFmt[specInUse], lb1, lb2, "KG", s1, s2);
+          
+#if defined(USE_LCD)
+    lcd.setCursor(1,0);
+    lcd.print(cBuff);
+#endif
+#if defined(USE_SERIAL)
+    Serial.println(cBuff);
+#endif
+    return 0;
+}
 
 void handleKeyPad ()
 {
@@ -141,8 +236,10 @@ void handleKeyPad ()
   if (customKey){
     switch (customKey) {
     case '*':     // clear key to restart the data entry sequence
-        lbNdx = 0;
+        lbNdx = 0;        // set the weight entry state indicator to allow input
+        stNdx = 0;        // set the stNdx state indicator indicating weight entry
         lb1 = lb2 = 0;
+        setLcdIndicator('*');
         break;
     case '#':     // change the units of measurement
         switch (iUnits) {
@@ -150,26 +247,50 @@ void handleKeyPad ()
           case Metric:  iUnits = English; break;
           default: iUnits = English; break;
         }
+        stNdx = 0;          // reset the stNdx state indicator as we are done
+        lbNdx = 100;        // set the weight entry state indicator to ignore input
+        updateLCDInfo();
+        setLcdIndicator('R');
         break;
     case 'A':       // set the status byte 1 value (0 - 3)
         stNdx = 1;
+        lbNdx = 100;        // set the weight entry state indicator to ignore input
+        setLcdIndicator('A');
         break;
     case 'B':       // set the status byte 2 value (0 - 3)
         stNdx = 2;
+        lbNdx = 100;        // set the weight entry state indicator to ignore input
+       setLcdIndicator('B');
         break;
-    case 'C':       // change the serial protocol SCP-01, SCP-02, etc.
+    case 'C':       // set the specification to be used for response messages
         stNdx = 100;
+        lbNdx = 100;        // set the weight entry state indicator to ignore input
+        setLcdIndicator('C');
+        break;
+    case 'D':       // write out current status information
+        stNdx = 0;          // reset the stNdx state indicator as we are done
+        lbNdx = 100;        // set the weight entry state indicator to ignore input
+        updateLCDInfo();
+        setLcdIndicator('R');
         break;
     case '0':
         if (stNdx == 100) {
-          cProtocol = Protocol_SCP_01;
-          stNdx = 0;
+          specInUse = Scp_01;
+          stNdx = 0;          // reset the stNdx state indicator as we are done
+          lbNdx = 100;        // set the weight entry state indicator to ignore input
+          modWeightValues();  // mod the current weight values in case too large for new spec
+          updateLCDInfo();
+          setLcdIndicator('R');
           break;
         }
     case '1':
         if (stNdx == 100) {
-          cProtocol = Protocol_SCP_02;
-          stNdx = 0;
+          specInUse = Scp_02;
+          stNdx = 0;          // reset the stNdx state indicator as we are done
+          lbNdx = 100;        // set the weight entry state indicator to ignore input
+          modWeightValues();  // mod the current weight values in case too large for new spec
+          updateLCDInfo();
+          setLcdIndicator('R');
           break;
         }
     case '2':
@@ -178,14 +299,10 @@ void handleKeyPad ()
           // set status byte 1, bits 0 and 1
           s1 &= 0xfc;   // clear bits 0 and 1
           s1 |= customKey - '0';
-          stNdx = 0;
-         break;
         } else if (stNdx == 2) {
           // set status byte 2, bits 0 and 1
           s2 &= 0xfc;   // clear bits 0 and 1
           s2 |= customKey - '0';
-          stNdx = 0;
-          break;
         }
     case '4':
     case '5':
@@ -194,25 +311,31 @@ void handleKeyPad ()
     case '8':
     case '9':
         if (stNdx) {
-          // if status byte change was requested then just ignore this
-          // and ensure no other digits entered will affect current weight setting.
+          // if status byte change or spec change was requested then just ignore this
           stNdx = 0;
           lbNdx = 100;
+          updateLCDInfo();
+          setLcdIndicator('R');
           break;
         }
 
-        if (lbNdx < Protocol_fmt[cProtocol].sMsbLen) {
+        if (lbNdx < specInUseFmt[specInUse].maxMsp) {
           lb1 *= 10;
           lb1 += customKey - '0';
-        } else if (lbNdx < Protocol_fmt[cProtocol].sMsbLen + Protocol_fmt[cProtocol].sLsbLen) {
+        } else if (lbNdx < specInUseFmt[specInUse].maxMsp + specInUseFmt[specInUse].maxLsp) {
           lb2 *= 10;
           lb2 += customKey - '0';
-        }
+         }
         lbNdx++;
+        if (lbNdx == specInUseFmt[specInUse].maxMsp + specInUseFmt[specInUse].maxLsp) {
+          updateLCDInfo();
+          setLcdIndicator('R');
+        }
         break;  
     }
   }
 }
+#endif    // defined(USE_KEYPAD)
 
 void handle_command(String &inCommand) {
     char cBuff[64];
@@ -220,15 +343,18 @@ void handle_command(String &inCommand) {
     switch (inCommand[0]) {
       case 'W':    // weight command
       case 'w':
-        sprintf (cBuff, Protocol_fmt[cProtocol].fmt_weight,
-            (lb1 % Protocol_fmt[cProtocol].sMsbMod), (lb2 % Protocol_fmt[cProtocol].sLsbMod),
-            pUnits[iUnits], s1, s2);
+        {
+          if (iUnits == English)
+            sprintf (cBuff, specInUseFmt[specInUse].specWeight, lb1, lb2, "LB", s1, s2);
+          else
+            sprintf (cBuff, specInUseFmt[specInUse].specWeight, lb1, lb2, "KG", s1, s2);
+        }
         break;
       case 'S':    // status command
       case 's':
       case 'Z':    // zero scale command (zeros scale but response is same as status command)
       case 'z':
-        sprintf (cBuff, Protocol_fmt[cProtocol].fmt_status, s1, s2);
+        sprintf (cBuff, specInUseFmt[specInUse].specStatus, s1, s2);
         break;
       default:     // unrecognized command
         sprintf (cBuff, "\n?\r\x03");
@@ -244,13 +370,17 @@ void setup() {
 
   delay (1000);
 
-  // Serial.println("Program started.");
+  updateLCDInfo();
+  setLcdIndicator('R');
+ 
 }
 
 void loop() {
    // put your main code here, to run repeatedly:
-   
+
+#if defined(USE_KEYPAD)
    handleKeyPad();
+#endif
   
    // setup as non-blocking code
    incoming = Serial.read();
