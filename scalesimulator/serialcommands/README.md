@@ -41,6 +41,15 @@ binary number of 0, 01, 10, or 11 setting bits 0  (scale in motion or not) and 1
 To change some of the status byte 2 indicators press the letter A key then press a single digit key between 0 through 3 which results in a
 binary number of 0, 01, 10, or 11 setting bits 0  (under capacity or not) and 1 (over capacity or not) of the second status byte.
 
+## User interface with 16x2 LCD
+
+We have added code to allow using a 16x2 LCD as a display of the current settings. Since the keypad requires so many pins, we are using the
+analog pins as digital pins in order to have the necessary six (6) wires between the LCD package and the Arduino.
+
+The 16x2 LCD is used to display the current settings and when the settings are changed using the keypad, the LCD is updated with the new
+settings. The information displayed includes the current weight setting along with the two status bytes used to indicate scale error
+conditions.
+
 ## Details of the scale SCP-01 protocol
 
 For details of the protocol see Weight-Tronix SCP-01 document 8408-14788-01, Serial Communications Protocol SCP -01 (NCI Standard, and 3825).
