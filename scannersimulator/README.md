@@ -4,6 +4,23 @@ See http://docshare04.docshare.tips/files/26226/262269318.pdf
 
 http://www.jpossoftware.com/jpos/Support/drivers/NCR/NCR7878ScannerScale/HighPer_Scanner-User-Guide.pdf
 
+## Communication protocols
+
+Scanning devices come in two main types: (1) hand held scanner and (2) table top scanner scales.
+
+The hand held scanner is often configured to use a keyboard wedge type of interface. This interface is simple in that the scanner
+reads the barcode, decodes it, and sends the barcode data as a string of characters that appear to be entered via a keyboard.
+The keyboard wedge interface does not require a program to be able to parse a communication protocol. The scanned data is
+presented as a series of keyboard key presses so any application that reads from the keyboard can process keyboard wedge
+scanner.
+
+The table top scanner scale, often installed in the checkout counter at grocery stores, can provide either weight data or barcode data.
+This type of scanner device uses a communication protocol in which the decoded barcode is embedded into a message containing other
+information.
+
+The older communication protocol over an RS-232 serial connection was based on the [Binary Synchronous Communication protocols](https://en.wikipedia.org/wiki/Binary_Synchronous_Communications) originated
+by IBM in the 1960s.
+
 ## Barcodes
 
 Barcodes are used for two main things, (1) Products or PLUs identifying items and (2) Coupons that provide discounts to items.
