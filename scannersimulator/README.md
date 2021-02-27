@@ -49,16 +49,34 @@ The scanner sends a barcode wrapped in a scanner message composed of a series of
 ## Built in barcodes
 
 The scanner simulator has a table of barcodes of the various types of codes. Using the simulator
-requires that a particular barcode from the table is selected for transmission.
+requires that a particular barcode from the table is selected for transmission. The barcode 
+contains the manufacturer identifier followed by the product identifier.
 
      PLU number/barcode                           Description
-                                      Package of Nabisco cookies (PLU)
-                                      can of Coca Cola (PLU)
-                                      half gallon carton of milk (PLU)
-                                      container of chicken breasts (PLU with weight)
+      0 70177 15576 6                 Twinings English Afternoon tea 20 bags
+      0 70177 15424 0                 Twinings Irish Breakfast tea 20 bags
+      0 70177 15412 7                 Twinings Darjeeling tea 20 bags
+      0 72310 00189 3                 Bigelow Plantation Mint tea 20 bags
+      0 72310 00197 8                 Bigelow Lemon Lift tea 20 bags
+      0 72310 00105 3                 Bigelow Constant Comment tea 20 bags
+      7 47599 30314 2                 Ghirardelli Squares Dark Chocolate Sea Caramel
+      0 46677 42600 2                 4 pack Philips EcoVantage Soft White 40w A19 bulbs
+      0 46677 42604 0                 4 pack Philips Soft White 100w A19 bulbs
+      0 86854 00568 2                 5.75 oz bottle Laura Lynn Manzanilla Olives with minced pimiento
+      0 86854 04362 2                 8.5 oz bottle Laura Lynn extra virgin olive oil
+      0 86854 04231 1                 14.5 oz can Laura Lynn diced tomatoes no salt added
+      0 41443 11342 1                 14.5 oz can Margaret Holmes Italian Green Beans
+      0 39400 01706 6                 16 oz can Bush's Reduced Sodium Garbanzos chick peas
+      0 52000 01122 7                 15 oz can Van Camp's Pork and Beans in tomato sauce
+      0 37000 38851 7                 Charmin Ultra Soft toilet tissue 6 roll Super Mega
+      0 37000 52778 7                 Charmin Ultra Soft toilet tissue 6 roll Mega
+      2 01404 30952 6                 container of beef loin 1.59lbs @ $5.99 (PLU, 01404 with price $9.52)
+      2 00065 10900 1                 container London Broil 2.44lbs @ $3.69 (PLU, 00065 with price $9.00)
+      2 06141 30600 5                 container deli lunch $6.00
                                   
       Coupon number/barcode                       Description
-                                       0.50 off two half gallon cartons of milk
+      0722776-100038                   Splenda Any Two items save $4.00
+      0037000-160114                   Charmin one toilet paper product save $0.25
                                        
                                        
      
