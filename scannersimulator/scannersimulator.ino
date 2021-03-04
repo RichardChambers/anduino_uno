@@ -50,7 +50,8 @@ ScannerData pluList[] = {
   {"A", "037000527787"},          //    Charmin Ultra Soft toilet tissue 6 roll Mega
   {"A", "201404309526"},          //    container of beef loin 1.59lbs @ $5.99 (PLU, 01404 with price $9.52)
   {"A", "200065109001"},          //    container London Broil 2.44lbs @ $3.69 (PLU, 00065 with price $9.00)
-  {"A", "206141306005"}           //    container deli lunch $6.00
+  {"A", "206141306005"},          //    container deli lunch $6.00
+  {"E", "1215704"}                //    Aquafina bottled water 1L
 };
 
 unsigned char s1 = 0x30, s2 = 0x30;   // status byte 1 and status byte 2
@@ -61,8 +62,8 @@ struct {
   bool  bSendBcc;
 } specInUseFmt [] = {
       //weight then units then status
-      { "\0x30\0x38%s%sx03", "\0x31\0x34%c%c\x03", false},     // NCR 78xx without BCC appended to message
-      { "\0x30\0x38%s%s\x03%2.2x", "\0x31\0x34%c%c\x03", true}  // NCR 78xx with BCC appended to message
+      { "18%s%s\x03", "14%c%c\x03", false},     // NCR 78xx without BCC appended to message
+      { "08%s%s\x03%2.2x", "14%c%c\x03", true}  // NCR 78xx with BCC appended to message
 };
 
 char *lcdInfoFmt[] = {
@@ -91,9 +92,10 @@ unsigned char ScannerScaleCalcBCC(unsigned char *puchData, short sLength)
     return (uchBCC);
 }
 
-#define USE_LCD
-#define USE_KEYPAD
-//#define USE_SERIAL
+//#define USE_LCD         // use the 16x2 LCD as a display
+//#define USE_KEYPAD      // use the keypad for input selection
+#define USE_BUTTON      // use the button to trigger sending a scan
+#define USE_SERIAL      // use Serial for debugging prints
 
 
 #if defined(USE_LCD)
@@ -121,6 +123,27 @@ unsigned char ScannerScaleCalcBCC(unsigned char *puchData, short sLength)
 // use the six analog pins as digital pins.
 // Analog pin 0 is digital pin 14, Analog pin 1 is digital pin 15, etc.
 LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
+#endif
+
+#if defined(USE_BUTTON)
+// A button is used as a scan trigger. The button event represents
+// an item's barcode being scanned to ring up the item.
+//
+// The button is expected to be a pushbutton that is wired so
+// that when pressed, the pin to which it is attached will see
+// HIGH when the pushbutton is pressed and LOW when it is released.
+// One side of the pushbutton is wired to 5v and the other pole
+// is wired to the sensing pin on the Arduino. There is a pulldown
+// resistor of 10KOhm connected between the second pole and ground.
+//
+// The button has a debouncing delay so that the button state is sensed
+// only so often in order to give a person time to press the button and
+// release it in order to trigger only a single scan event.
+
+const int buttonPin = 10;    // the pin number the pushbutton is connected to
+int buttonState = 0;         // variable for reading the pushbutton status
+const unsigned long buttondelay = 250;  // milliseconds of delay for debouncing
+
 #endif
 
 #if defined(USE_KEYPAD)
@@ -270,11 +293,17 @@ void handleKeyPad ()
 }
 #endif    // defined(USE_KEYPAD)
 
-void handle_command(String &inCommand) {
-    char cBuff[64];
+void handle_command(const String &inCommand) {
+    char cBuff[64] = {0};
 
+#if defined(USE_SERIAL)
+    Serial.println(inCommand);
+#endif
     switch (inCommand[0]) {
       case 0x31:    // status command
+#if defined(USE_SERIAL)
+        Serial.println("0x31 command");
+#endif
         if (inCommand[1] == 0x33) {
           sprintf (cBuff, specInUseFmt[0].specStatus, s1, s2);
         } else {
@@ -291,6 +320,9 @@ void handle_command(String &inCommand) {
     }
     
     Serial.print(cBuff);
+#if defined(USE_SERIAL)
+    Serial.println("");
+#endif
 }
 
 void setup() {
@@ -299,9 +331,16 @@ void setup() {
 
   delay (1000);
 
+#if defined(USE_LCD)
   updateLCDInfo();
   setLcdIndicator('R');
- 
+#endif
+
+#if defined(USE_BUTTON)
+  // initialize the pushbutton pin as an input:
+  pinMode(buttonPin, INPUT);
+#endif
+
 }
 
 void loop() {
@@ -310,7 +349,19 @@ void loop() {
 #if defined(USE_KEYPAD)
    handleKeyPad();
 #endif
-  
+
+#if defined(USE_BUTTON)
+    // read the state of the pushbutton value:
+    buttonState = digitalRead(buttonPin);
+    
+    if (buttonState) {
+      delay(buttondelay);
+      handle_command("11");
+      // Clear the string for the next command
+      inBuffer = "";
+    }
+#endif
+
    // setup as non-blocking code
    incoming = Serial.read();
    if(incoming < 255) {
