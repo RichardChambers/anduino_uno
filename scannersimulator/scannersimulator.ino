@@ -46,6 +46,7 @@ ScannerData pluList[] = {
   {"A", "041443113421"},          //    14.5 oz can Margaret Holmes Italian Green Beans
   {"A", "039400017066"},          //    16 oz can Bush's Reduced Sodium Garbanzos chick peas
   {"A", "052000011227"},          //    15 oz can Van Camp's Pork and Beans in tomato sauce
+  {"A", "029000076501"},          //    16 oz Planters Dry Roasted Peanuts Lightly salted
   {"A", "037000388517"},          //    Charmin Ultra Soft toilet tissue 6 roll Super Mega
   {"A", "037000527787"},          //    Charmin Ultra Soft toilet tissue 6 roll Mega
   {"A", "201404309526"},          //    container of beef loin 1.59lbs @ $5.99 (PLU, 01404 with price $9.52)
