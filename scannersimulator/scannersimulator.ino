@@ -120,9 +120,24 @@ unsigned char ScannerScaleCalcBCC(unsigned char *puchData, short sLength)
 
 #include <LiquidCrystal.h>
 
+// For wiring notes see https://create.arduino.cc/projecthub/najad/interfacing-lcd1602-with-arduino-764ec4
+// Notes:
+//  1) this diagram hard wires contrast, pins A and K, to 3.3v and ground rather than pin A to a potentiometer.
+//  2) this diagram hard wires Read/Write pin to ground for write only
+//  3) this diagram is using the LCD in 4 bit mode so only four data pins are needed, D4 thru D7.
+//
+// For explanation of mode
+//  - 4 bit mode  https://learningmsp430.wordpress.com/2013/11/16/16x2-lcd-interfacing-in-4-bit-mode/
+//  - 8 bit mode  https://learningmsp430.wordpress.com/2013/11/13/16x2-lcd-interfacing-in-8bit-mode/
+//
 // In order to use both the LCD and the keypad we will
 // use the six analog pins as digital pins.
+//  - RS is register select, instruction registor or data register
+//  - EN is enable LCD
+//  - D4 thru D7 are the data pins to provide 8 bit characters 4 bits at a time
 // Analog pin 0 is digital pin 14, Analog pin 1 is digital pin 15, etc.
+//    pins        A0  A1  A2  A3  A4  A5
+//    LCD pins    RS  EN  D4  D5  D6  D7
 LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 #endif
 
