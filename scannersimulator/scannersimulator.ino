@@ -1,4 +1,3 @@
-
 /*
  * Scanner simulator built on the previous scale simulator.
  * 
@@ -93,7 +92,7 @@ unsigned char ScannerScaleCalcBCC(unsigned char *puchData, short sLength)
     return (uchBCC);
 }
 
-//#define USE_LCD         // use the 16x2 LCD as a display
+#define USE_LCD         // use the 16x2 LCD as a display
 //#define USE_KEYPAD      // use the keypad for input selection
 #define USE_BUTTON      // use the button to trigger sending a scan
 #define USE_SERIAL      // use Serial for debugging prints
@@ -140,6 +139,36 @@ unsigned char ScannerScaleCalcBCC(unsigned char *puchData, short sLength)
 //    LCD pins    RS  EN  D4  D5  D6  D7
 LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 #endif
+
+int setLcdIndicator (int c)
+{
+  char cBuff[4]= {0, 0};
+  cBuff[0] = c;
+  
+#if defined(USE_LCD)
+  lcd.setCursor(0,1);    // beginning at column 0, line 1 (begining of first column on second line)
+  lcd.print(cBuff);
+#endif
+#if defined(USE_SERIAL)
+  Serial.print("setLcdIndicator: "); 
+  Serial.println(cBuff);
+#endif
+  return 0;
+}
+
+int updateLCDInfo (void)
+{
+    char cBuff[32] = "Hello";
+          
+#if defined(USE_LCD)
+    lcd.setCursor(1,0);
+    lcd.print(cBuff);
+#endif
+#if defined(USE_SERIAL)
+    Serial.println(cBuff);
+#endif
+    return 0;
+}
 
 #if defined(USE_BUTTON)
 // A button is used as a scan trigger. The button event represents
@@ -190,36 +219,6 @@ Keypad customKeypad = Keypad( makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS
 
 short lbNdx = 0;    // index for keypad data entry into lb1 and lb2 to change weight
 short stNdx = 0;    // set status indicator, 0 no set, 1 set byte 1, 2 set byte 2, 100 set Spec in use
-
-int setLcdIndicator (int c)
-{
-  char cBuff[4]= {0, 0};
-  cBuff[0] = c;
-  
-#if defined(USE_LCD)
-  lcd.setCursor(0,1);    // beginning at column 0, line 1 (begining of first column on second line)
-  lcd.print(cBuff);
-#endif
-#if defined(USE_SERIAL)
-  Serial.print("setLcdIndicator: "); 
-  Serial.println(cBuff);
-#endif
-  return 0;
-}
-
-int updateLCDInfo (void)
-{
-    char cBuff[32] = {0};
-          
-#if defined(USE_LCD)
-    lcd.setCursor(1,0);
-    lcd.print(cBuff);
-#endif
-#if defined(USE_SERIAL)
-    Serial.println(cBuff);
-#endif
-    return 0;
-}
 
 void handleKeyPad ()
 {
@@ -372,9 +371,11 @@ void loop() {
     
     if (buttonState) {
       delay(buttondelay);
+      setLcdIndicator('X');
       handle_command("11");
       // Clear the string for the next command
       inBuffer = "";
+      setLcdIndicator('R');
     }
 #endif
 
