@@ -638,13 +638,24 @@ void parseResponseWeight(char *pBuff)
 
 void printHelp()
 {
+    printf("Vers. 1.0.1  Nov - 22 - 2022\n");
+ 
     printf("Commands\n");
     printf("   w  - ask for weight from scale.\n");
     printf("   s  - ask for status from scale.\n");
     printf("   z  - zero scale.\n");
     printf("   p  - set port number and open port.\n");
     printf("   h  - print this help text.\n");
-    printf("   e  - exit.\n");
+    printf("   e  - exit.\n\n");
+
+    printf("Serial port errors\n");
+    printf("   PIF_ERROR_COM_POWER_FAILURE     (HANDLE)(-2).\n");
+    printf("   PIF_ERROR_COM_TIMEOUT           (HANDLE)(-3).\n");
+    printf("   PIF_ERROR_COM_NOT_PROVIDED      (HANDLE)(-4).\n");
+    printf("   PIF_ERROR_COM_BUSY              (HANDLE)(-5).\n");
+    printf("   PIF_ERROR_COM_EOF               (HANDLE)(-6).\n");
+    printf("   PIF_ERROR_COM_ABORTED           (HANDLE)(-9).\n");
+    printf("   PIF_ERROR_COM_ACCESS_DENIED     (HANDLE)(-10).\n");
 
     fflush(stdout);
 }
