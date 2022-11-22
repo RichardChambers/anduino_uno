@@ -16,6 +16,7 @@ The available commands are:
  - w  request a weight
  - s  request a status
  - z  zero the scale
+ - p  close current port and open one specified (syntax p n where n is serial port number)
  - h  display the list of commands (help)
  - e or x  exit the application
  
