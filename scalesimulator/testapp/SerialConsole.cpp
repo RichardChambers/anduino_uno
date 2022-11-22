@@ -642,6 +642,7 @@ void printHelp()
     printf("   w  - ask for weight from scale.\n");
     printf("   s  - ask for status from scale.\n");
     printf("   z  - zero scale.\n");
+    printf("   p  - set port number and open port.\n");
     printf("   h  - print this help text.\n");
     printf("   e  - exit.\n");
 
@@ -652,13 +653,13 @@ int main()
 {
     printHelp();
 
-    USHORT    usPortId = 6;
+    SHORT     sPortId = -1;
     PROTOCOL  Protocol = { 0 };
 
     Protocol.usComBaud = 9600;
     Protocol.auchComHandShakePro |= COM_BYTE_HANDSHAKE_XONOFF;
 
-    HANDLE   hPort = PifOpenCom(usPortId, &Protocol);
+    HANDLE   hPort = INVALID_HANDLE_VALUE;
 
     do {
         char buf[32] = { 0 };
@@ -694,6 +695,16 @@ int main()
             usBytes = strlen(buf);
             PifWriteCom(hPort, &buf, usBytes);
             iRead = 1;
+            break;
+        case 'p':
+        case 'P':
+            PifCloseCom(hPort);
+            sPortId = atoi(xBuff + 1);
+            hPort = PifOpenCom(sPortId, &Protocol);
+            if ((long)hPort < 0) {
+                printf("ERROR: open port failed code %d\n", (long)hPort);
+                hPort = INVALID_HANDLE_VALUE;
+            }
             break;
         case 'h':
         case 'H':
