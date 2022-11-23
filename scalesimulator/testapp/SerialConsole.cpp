@@ -638,7 +638,7 @@ void parseResponseWeight(char *pBuff)
 
 void printHelp()
 {
-    printf("Vers. 1.0.2  Nov - 22 - 2022\n");
+    printf("Vers. 1.0.3  Nov - 23 - 2022\n");
  
     printf("Commands\n");
     printf("   w  - ask for weight from scale.\n");
@@ -667,8 +667,11 @@ int main()
     SHORT     sPortId = -1;
     PROTOCOL  Protocol = { 0 };
 
+    // set the standard scale protocol that is used.
     Protocol.usComBaud = 9600;
-    Protocol.auchComHandShakePro |= COM_BYTE_HANDSHAKE_XONOFF;
+    Protocol.auchComHandShakePro |= COM_BYTE_HANDSHAKE_NONE;
+    Protocol.uchComByteFormat |= COM_BYTE_7_BITS_DATA;
+    Protocol.uchComByteFormat |= COM_BYTE_EVEN_PARITY;
 
     HANDLE   hPort = INVALID_HANDLE_VALUE;
 
