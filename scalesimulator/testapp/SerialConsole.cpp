@@ -638,7 +638,7 @@ void parseResponseWeight(char *pBuff)
 
 void printHelp()
 {
-    printf("Vers. 1.0.1  Nov - 22 - 2022\n");
+    printf("Vers. 1.0.2  Nov - 22 - 2022\n");
  
     printf("Commands\n");
     printf("   w  - ask for weight from scale.\n");
@@ -688,24 +688,39 @@ int main()
         switch (xBuff[0]) {
         case 'w':
         case 'W':
-            strcpy(buf, "W\r");
-            usBytes = strlen(buf);
-            PifWriteCom(hPort, &buf, usBytes);
-            iRead = 1;
+            if ((long)hPort >= 0) {
+                strcpy(buf, "W\r");
+                usBytes = strlen(buf);
+                PifWriteCom(hPort, &buf, usBytes);
+                iRead = 1;
+            }
+            else {
+                printf("ERROR: port not open. Use p command to open port.\n");
+            }
             break;
         case 's':
         case 'S':
-            strcpy(buf, "S\r");
-            usBytes = strlen(buf);
-            PifWriteCom(hPort, &buf, usBytes);
-            iRead = 1;
+            if ((long)hPort >= 0) {
+                strcpy(buf, "S\r");
+                usBytes = strlen(buf);
+                PifWriteCom(hPort, &buf, usBytes);
+                iRead = 1;
+            }
+            else {
+                printf("ERROR: port not open. Use p command to open port.\n");
+            }
             break;
         case 'z':
         case 'Z':
-            strcpy(buf, "Z\r");
-            usBytes = strlen(buf);
-            PifWriteCom(hPort, &buf, usBytes);
-            iRead = 1;
+            if ((long)hPort >= 0) {
+                strcpy(buf, "Z\r");
+                usBytes = strlen(buf);
+                PifWriteCom(hPort, &buf, usBytes);
+                iRead = 1;
+            }
+            else {
+                printf("ERROR: port not open. Use p command to open port.\n");
+            }
             break;
         case 'p':
         case 'P':
@@ -727,14 +742,17 @@ int main()
         if (iRead) {
             char bufin[128] = { 0 };
 
+            iRead = 0;
             short sRet = PifReadCom(hPort, &bufin, sizeof(bufin));
             if (bufin[0] != '\n') {
-                printf("  Response has incorrect format.\n");
+                char bufPrint[256] = { 0 };
+                sprintf_s(bufPrint, 255, "0x%2.2x 0x%2.2x 0x%2.2x 0x%2.2x 0x%2.2x 0x%2.2x 0x%2.2x 0x%2.2x \n", bufin[0], bufin[1], bufin[2], bufin[3], bufin[4], bufin[5], bufin[6], bufin[7]);
+                printf("  Response has incorrect format. sRet = %d.\n    %s\n", sRet, bufPrint);
             } else if (bufin[1] == '?') {
-                printf("  Response: Unrecognized command.\n");
+                printf("  Response: Unrecognized command. sRet = %d.\n", sRet);
             }
             else {
-                switch (buf[0]) {
+                switch (buf[0]) {  // switch on the user command
                 case 'z':
                 case 'Z':
                 case 's':
@@ -744,7 +762,10 @@ int main()
                         printf("  Response:  status 0x%1.1x 0x%1.1x\n", st.s1, st.s2);
                     } 
                     else {
-                        printf("  Error in response: iError = %d.\n", st.iError);
+                        char bufPrint[256] = { 0 };
+                        sprintf_s(bufPrint, 255, "0x%2.2x 0x%2.2x 0x%2.2x 0x%2.2x 0x%2.2x 0x%2.2x 0x%2.2x 0x%2.2x \n",
+                            bufin[0], bufin[1], bufin[2], bufin[3], bufin[4], bufin[5], bufin[6], bufin[7]);
+                        printf("  Error in response: iError = %d. sRet = %d.\n    %s\n", st.iError, sRet, bufPrint);
                     }
                     break;
                 case 'w':
